@@ -4,6 +4,7 @@ library places;
 import 'dart:async';
 import 'dart:developer';
 import 'dart:html' as html;
+import 'dart:js_interop';
 import 'dart:js_util';
 
 import 'package:collection/collection.dart';
@@ -15,6 +16,7 @@ import 'package:flutter_google_places_sdk_platform_interface/flutter_google_plac
 import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 import 'package:google_maps/google_maps.dart';
 import 'package:google_maps/google_maps.dart' as core;
+import 'package:google_maps/google_maps_geocoding.dart';
 import 'package:google_maps/google_maps_places.dart' as places;
 import 'package:google_maps/google_maps_places.dart';
 import 'package:js/js.dart';
@@ -224,7 +226,7 @@ class FlutterGooglePlacesSdkWebPlugin extends FlutterGooglePlacesSdkPlatform {
       address: place.formattedAddress,
       addressComponents: place.addressComponents
           ?.map(_parseAddressComponent)
-          .cast<AddressComponent>()
+          .cast<inter.AddressComponent>()
           .toList(growable: false),
       businessStatus:
           _parseBusinessStatus(getProperty(place, 'business_status')),
@@ -265,13 +267,13 @@ class FlutterGooglePlacesSdkWebPlugin extends FlutterGooglePlacesSdkPlatform {
         orElse: () => null);
   }
 
-  AddressComponent? _parseAddressComponent(
+  inter.AddressComponent? _parseAddressComponent(
       GeocoderAddressComponent? addressComponent) {
     if (addressComponent == null) {
       return null;
     }
 
-    return AddressComponent(
+    return inter.AddressComponent(
       name: addressComponent.longName ?? '',
       shortName: addressComponent.shortName ?? '',
       types: addressComponent.types
@@ -327,12 +329,12 @@ class FlutterGooglePlacesSdkWebPlugin extends FlutterGooglePlacesSdkPlatform {
         northeast: _parseLatLang(viewport.northEast)!);
   }
 
-  PlusCode? _parsePlusCode(PlacePlusCode? plusCode) {
+  inter.PlusCode? _parsePlusCode(PlacePlusCode? plusCode) {
     if (plusCode == null) {
       return null;
     }
 
-    return PlusCode(
+    return inter.PlusCode(
       compoundCode: plusCode.compoundCode ?? '',
       globalCode: plusCode.globalCode ?? '',
     );
@@ -348,12 +350,12 @@ class FlutterGooglePlacesSdkWebPlugin extends FlutterGooglePlacesSdkPlatform {
         (element) => element.name.toUpperCase() == businessStatus);
   }
 
-  OpeningHours? _parseOpeningHours(PlaceOpeningHours? openingHours) {
+  inter.OpeningHours? _parseOpeningHours(PlaceOpeningHours? openingHours) {
     if (openingHours == null) {
       return null;
     }
 
-    return OpeningHours(
+    return inter.OpeningHours(
       periods: openingHours.periods
               ?.whereNotNull()
               .map(_parsePeriod)
@@ -427,7 +429,7 @@ class FlutterGooglePlacesSdkWebPlugin extends FlutterGooglePlacesSdkPlatform {
     final options = PhotoOptions()
       ..maxWidth = maxWidth
       ..maxHeight = maxHeight;
-    final url = value.getUrl(options);
+    final url = value.url;
 
     return FetchPlacePhotoResponse.imageUrl(url!);
   }
