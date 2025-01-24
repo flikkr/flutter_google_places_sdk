@@ -52,7 +52,7 @@ class FlutterGooglePlacesSdkWebPlugin extends FlutterGooglePlacesSdkPlatform {
   }
 
   @override
-  Future<void> initialize(String apiKey, {Locale? locale}) async {
+  Future<void> initialize(String apiKey, {Locale? locale, bool? useNewApi}) async {
     if (_svcAutoComplete != null) {
       return;
     }
@@ -62,14 +62,12 @@ class FlutterGooglePlacesSdkWebPlugin extends FlutterGooglePlacesSdkPlatform {
 
     _initMap = _doInit.toJS;
 
-    html.Element? scriptExist =
-        html.window.document.querySelector('#$_SCRIPT_ID');
+    html.Element? scriptExist = html.window.document.querySelector('#$_SCRIPT_ID');
     if (scriptExist != null) {
       _doInit();
     } else {
       final body = html.window.document.querySelector('body')!;
-      var src =
-          'https://maps.googleapis.com/maps/api/js?key=${apiKey}&loading=async&libraries=places&callback=initMap';
+      var src = 'https://maps.googleapis.com/maps/api/js?key=${apiKey}&loading=async&libraries=places&callback=initMap';
       if (locale?.languageCode != null) {
         _language = locale?.languageCode;
       }
@@ -84,7 +82,7 @@ class FlutterGooglePlacesSdkWebPlugin extends FlutterGooglePlacesSdkPlatform {
   }
 
   @override
-  Future<void> updateSettings(String apiKey, {Locale? locale}) async {
+  Future<void> updateSettings(String apiKey, {Locale? locale, bool? useNewApi}) async {
     if (locale != null) {
       _language = locale.languageCode;
     }
@@ -125,15 +123,11 @@ class FlutterGooglePlacesSdkWebPlugin extends FlutterGooglePlacesSdkPlatform {
       ..language = _language);
     final resp = await prom;
 
-    final predictions = resp.predictions
-            .whereNotNull()
-            .map(_translatePrediction)
-            .toList(growable: false);
+    final predictions = resp.predictions.whereNotNull().map(_translatePrediction).toList(growable: false);
     return FindAutocompletePredictionsResponse(predictions);
   }
 
-  inter.AutocompletePrediction _translatePrediction(
-      places.AutocompletePrediction prediction) {
+  inter.AutocompletePrediction _translatePrediction(places.AutocompletePrediction prediction) {
     var main_text = prediction.structuredFormatting.mainText;
     var secondary_text = prediction.structuredFormatting.secondaryText;
     return inter.AutocompletePrediction(
@@ -222,33 +216,26 @@ class FlutterGooglePlacesSdkWebPlugin extends FlutterGooglePlacesSdkPlatform {
     return inter.Place(
       id: place.placeId,
       address: place.formattedAddress,
-      addressComponents: place.addressComponents
-          ?.map(_parseAddressComponent)
-          .cast<inter.AddressComponent>()
-          .toList(growable: false),
-      businessStatus:
-          _parseBusinessStatus(getProperty(place, 'business_status')),
+      addressComponents:
+          place.addressComponents?.map(_parseAddressComponent).cast<inter.AddressComponent>().toList(growable: false),
+      businessStatus: _parseBusinessStatus(getProperty(place, 'business_status')),
       attributions: place.htmlAttributions?.cast<String>(),
       latLng: _parseLatLang(place.geometry?.location),
       name: place.name,
       openingHours: _parseOpeningHours(place.openingHours),
       phoneNumber: place.internationalPhoneNumber,
-      photoMetadatas: place.photos
-          ?.map((photo) => _parsePhotoMetadata(photo))
-          .cast<PhotoMetadata>()
-          .toList(growable: false),
+      photoMetadatas:
+          place.photos?.map((photo) => _parsePhotoMetadata(photo)).cast<PhotoMetadata>().toList(growable: false),
       plusCode: _parsePlusCode(place.plusCode),
       priceLevel: place.priceLevel?.toInt(),
       rating: place.rating?.toDouble(),
-      types: place.types
-          ?.map(_parsePlaceType)
-          .where((item) => item != null)
-          .cast<PlaceType>()
-          .toList(growable: false),
+      types: place.types?.map(_parsePlaceType).where((item) => item != null).cast<PlaceType>().toList(growable: false),
       userRatingsTotal: place.userRatingsTotal?.toInt(),
       utcOffsetMinutes: place.utcOffsetMinutes?.toInt(),
       viewport: _parseLatLngBounds(place.geometry?.viewport),
       websiteUri: place.website == null ? null : Uri.parse(place.website!),
+      nameLanguageCode: null,
+      reviews: null,
     );
   }
 
@@ -258,13 +245,10 @@ class FlutterGooglePlacesSdkWebPlugin extends FlutterGooglePlacesSdkPlatform {
     }
 
     placeType = placeType.toUpperCase();
-    return PlaceType.values.cast<PlaceType?>().firstWhere(
-        (element) => element!.value == placeType,
-        orElse: () => null);
+    return PlaceType.values.cast<PlaceType?>().firstWhere((element) => element!.value == placeType, orElse: () => null);
   }
 
-  inter.AddressComponent? _parseAddressComponent(
-      geocoding.GeocoderAddressComponent? addressComponent) {
+  inter.AddressComponent? _parseAddressComponent(geocoding.GeocoderAddressComponent? addressComponent) {
     if (addressComponent == null) {
       return null;
     }
@@ -272,11 +256,7 @@ class FlutterGooglePlacesSdkWebPlugin extends FlutterGooglePlacesSdkPlatform {
     return inter.AddressComponent(
       name: addressComponent.longName,
       shortName: addressComponent.shortName,
-      types: addressComponent.types
-              .whereNotNull()
-              .map((e) => e.toString())
-              .cast<String>()
-              .toList(growable: false),
+      types: addressComponent.types.whereNotNull().map((e) => e.toString()).cast<String>().toList(growable: false),
     );
   }
 
@@ -296,8 +276,7 @@ class FlutterGooglePlacesSdkWebPlugin extends FlutterGooglePlacesSdkPlatform {
       return null;
     }
 
-    final htmlAttrs =
-        photo.htmlAttributions.whereNotNull().toList(growable: false);
+    final htmlAttrs = photo.htmlAttributions.whereNotNull().toList(growable: false);
     final photoMetadata = PhotoMetadata(
         photoReference: _getPhotoMetadataReference(photo),
         width: photo.width.toInt(),
@@ -320,8 +299,7 @@ class FlutterGooglePlacesSdkWebPlugin extends FlutterGooglePlacesSdkPlatform {
     }
 
     return inter.LatLngBounds(
-        southwest: _parseLatLang(viewport.southWest)!,
-        northeast: _parseLatLang(viewport.northEast)!);
+        southwest: _parseLatLang(viewport.southWest)!, northeast: _parseLatLang(viewport.northEast)!);
   }
 
   inter.PlusCode? _parsePlusCode(PlacePlusCode? plusCode) {
@@ -341,8 +319,7 @@ class FlutterGooglePlacesSdkWebPlugin extends FlutterGooglePlacesSdkPlatform {
     }
 
     businessStatus = businessStatus.toUpperCase();
-    return inter.BusinessStatus.values.firstWhereOrNull(
-        (element) => element.name.toUpperCase() == businessStatus);
+    return inter.BusinessStatus.values.firstWhereOrNull((element) => element.name.toUpperCase() == businessStatus);
   }
 
   inter.OpeningHours? _parseOpeningHours(PlaceOpeningHours? openingHours) {
@@ -351,24 +328,13 @@ class FlutterGooglePlacesSdkWebPlugin extends FlutterGooglePlacesSdkPlatform {
     }
 
     return inter.OpeningHours(
-      periods: openingHours.periods
-              ?.whereNotNull()
-              .map(_parsePeriod)
-              .cast<Period>()
-              .toList(growable: false) ??
-          [],
-      weekdayText: openingHours.weekdayText
-              ?.whereNotNull()
-              .cast<String>()
-              .toList(growable: false) ??
-          [],
+      periods: openingHours.periods?.whereNotNull().map(_parsePeriod).cast<Period>().toList(growable: false) ?? [],
+      weekdayText: openingHours.weekdayText?.whereNotNull().cast<String>().toList(growable: false) ?? [],
     );
   }
 
   Period _parsePeriod(PlaceOpeningHoursPeriod period) {
-    return Period(
-        open: _parseTimeOfWeek(period.open)!,
-        close: _parseTimeOfWeek(period.close));
+    return Period(open: _parseTimeOfWeek(period.open)!, close: _parseTimeOfWeek(period.close));
   }
 
   TimeOfWeek? _parseTimeOfWeek(PlaceOpeningHoursTime? timeOfWeek) {
@@ -395,8 +361,7 @@ class FlutterGooglePlacesSdkWebPlugin extends FlutterGooglePlacesSdkPlatform {
     if (bounds == null) {
       return null;
     }
-    return core.LatLngBounds(
-        _latLngToWeb(bounds.southwest), _latLngToWeb(bounds.northeast));
+    return core.LatLngBounds(_latLngToWeb(bounds.southwest), _latLngToWeb(bounds.northeast));
   }
 
   core.LatLng _latLngToWeb(inter.LatLng latLng) {
